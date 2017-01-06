@@ -46,7 +46,7 @@ class PxGraphViz
     @px.each_recursive do |x, parent, level|
 
       next if level <= 0
-      a_edges << [parent.label, x.label]
+      a_edges << [parent.label, x.label, x.connection]
 
     end
 
@@ -56,9 +56,12 @@ class PxGraphViz
     edge_records = RexleBuilder.build do |xml|
 
       xml.records do
-        a_edges.each do |item1, item2|
-          xml.edge do
-            xml.summary
+        a_edges.each.with_index do |x, i|
+          item1, item2, connection = x
+          xml.edge id: 'e' + (i+1).to_s do
+            xml.summary do
+              xml.label connection
+            end
             xml.records { RexleArray.new([h_nodes[item1], h_nodes[item2]])}
           end
         end
@@ -74,31 +77,31 @@ class PxGraphViz
         [['option', {}, '', 
           ['summary',{},'', ['type',{}, 'node']],
           ['records',{}, '', 
-            ['attribute', {name: 'color', value: '#ddaa66'}],
-            ['attribute', {name: 'style', value: 'filled'}],
-            ['attribute', {name: 'shape', value: 'box'}], 
-            ['attribute', {name: 'penwidth', value: '1'}], 
-            ['attribute', {name: 'fontname', value: 'Trebuchet MS'}],
-            ['attribute', {name: 'fontsize', value: '8'}],
-            ['attribute', {name: 'fillcolor', value: '#775500'}],
-            ['attribute', {name: 'fontcolor', value: '#ffeecc'}],
-            ['attribute', {name: 'margin', value: '0.0'}]
+            ['attribute', {}, '', ['name', {},  'color'], ['value', {},  '#ddaa66']],
+            ['attribute', {}, '', ['name', {},  'style'], ['value', {},  'filled']],
+            ['attribute', {}, '', ['name', {},  'shape'], ['value', {},  'box']], 
+            ['attribute', {}, '', ['name', {},  'penwidth'], ['value', {},  '1']], 
+            ['attribute', {}, '', ['name', {},  'fontname'], ['value', {},  'Trebuchet MS']],
+            ['attribute', {}, '', ['name', {},  'fontsize'], ['value', {},  '8']],
+            ['attribute', {}, '', ['name', {},  'fillcolor'], ['value', {},  '#775500']],
+            ['attribute', {}, '', ['name', {},  'fontcolor'], ['value', {},  '#ffeecc']],
+            ['attribute', {}, '', ['name', {},  'margin'], ['value', {},  '0.0']]
           ]
         ],
         ['option', {}, '',
           ['summary', {}, '', ['type', {}, 'edge']],
           ['records', {}, '',
-            ['attribute', {name: 'color', value: '#ddaa66'}],
-            ['attribute', {name: 'weight', value: '1'}],
-            ['attribute', {name: 'fontsize', value: '8'}],
-            ['attribute', {name: 'fontcolor', value: '#ffeecc'}],
-            ['attribute', {name: 'fontname', value: 'Trebuchet MS'}],
-            ['attribute', {name: 'dir', value: 'forward'}],
-            ['attribute', {name: 'arrowsize', value: '0.5'}]
+            ['attribute', {}, '', ['name', {},  'color'], ['value', {},  '#999999']],
+            ['attribute', {}, '', ['name', {},  'weight'], ['value', {},  '1']],
+            ['attribute', {}, '', ['name', {},  'fontsize'], ['value', {},  '8']],
+            ['attribute', {}, '', ['name', {},  'fontcolor'], ['value', {},  '#444444']],
+            ['attribute', {}, '', ['name', {},  'fontname'], ['value', {},  'Verdana']],
+            ['attribute', {}, '', ['name', {},  'dir'], ['value', {},  'forward']],
+            ['attribute', {}, '', ['name', {},  'arrowsize'], ['value', {},  '0.5']]
           ]
         ]]
       },
-      nodes: {summary: '', records: node_records},
+      nodes: {summary: '', records: node_records[3..-1]},
       edges: {summary: '', records: edge_records[3..-1]}
     }
 

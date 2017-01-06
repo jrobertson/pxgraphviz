@@ -16,9 +16,6 @@ The PxGraphViz gem generates a GraphViz Markup Language file as can been seen in
     "
 
 
-    px = Polyrex.new
-    px.import s
-
     pxg = PxGraphViz.new(s)
     doc = pxg.to_doc
     File.write 'gvml.xml', doc.xml(pretty: true)

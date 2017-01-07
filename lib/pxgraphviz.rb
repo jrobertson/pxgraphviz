@@ -69,43 +69,37 @@ class PxGraphViz
 
     end
 
-    h_doc = {
+    
+style = '
+  node { 
+    color: #ddaa66; 
+    fillcolor: #775500;
+    fontcolor: #ffeecc; 
+    fontname: Trebuchet MS; 
+    fontsize: 8; 
+    margin: 0.0;
+    penwidth: 1; 
+    shape: box; 
+    style: filled;
+  }
 
-    options: {
-      summary: '', 
-      records: 
-        [['option', {}, '', 
-          ['summary',{},'', ['type',{}, 'node']],
-          ['records',{}, '', 
-            ['attribute', {}, '', ['name', {},  'color'], ['value', {},  '#ddaa66']],
-            ['attribute', {}, '', ['name', {},  'style'], ['value', {},  'filled']],
-            ['attribute', {}, '', ['name', {},  'shape'], ['value', {},  'box']], 
-            ['attribute', {}, '', ['name', {},  'penwidth'], ['value', {},  '1']], 
-            ['attribute', {}, '', ['name', {},  'fontname'], ['value', {},  'Trebuchet MS']],
-            ['attribute', {}, '', ['name', {},  'fontsize'], ['value', {},  '8']],
-            ['attribute', {}, '', ['name', {},  'fillcolor'], ['value', {},  '#775500']],
-            ['attribute', {}, '', ['name', {},  'fontcolor'], ['value', {},  '#ffeecc']],
-            ['attribute', {}, '', ['name', {},  'margin'], ['value', {},  '0.0']]
-          ]
-        ],
-        ['option', {}, '',
-          ['summary', {}, '', ['type', {}, 'edge']],
-          ['records', {}, '',
-            ['attribute', {}, '', ['name', {},  'color'], ['value', {},  '#999999']],
-            ['attribute', {}, '', ['name', {},  'weight'], ['value', {},  '1']],
-            ['attribute', {}, '', ['name', {},  'fontsize'], ['value', {},  '8']],
-            ['attribute', {}, '', ['name', {},  'fontcolor'], ['value', {},  '#444444']],
-            ['attribute', {}, '', ['name', {},  'fontname'], ['value', {},  'Verdana']],
-            ['attribute', {}, '', ['name', {},  'dir'], ['value', {},  'forward']],
-            ['attribute', {}, '', ['name', {},  'arrowsize'], ['value', {},  '0.5']]
-          ]
-        ]]
-      },
+  edge {
+    arrowsize: 0.5;
+    color: #999999; 
+    fontcolor: #444444; 
+    fontname: Verdana; 
+    fontsize: 8; 
+    dir: forward;
+    weight: 1;
+  }
+'
+    h = {
+      style: style,
       nodes: {summary: '', records: node_records[3..-1]},
       edges: {summary: '', records: edge_records[3..-1]}
     }
 
-    a = RexleBuilder.new(h_doc).to_a
+    a = RexleBuilder.new(h).to_a
     a[0] = 'gvml'
     Rexle.new(a)    
 

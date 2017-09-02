@@ -11,14 +11,30 @@ class PxGraphViz
 
   def initialize(s)
 
-    @px = Polyrex.new
-    @px.import s
+    if s =~ /^<\?/ then
+      
+      @px = Polyrex.new
+      @px.import s        
 
+    else
+      @px = Polyrex.new s
+
+    end
+    
   end
 
   def to_doc()
 
-    labels = @px.xpath('//records/item/summary/label/text()').uniq
+    #jr020917 labels = @px.xpath('//records/item/summary/label/text()').uniq
+    
+    summary = @px.xpath('//records/item/summary')
+    labels = summary.map do |x|
+      label = x.text('label')
+      shape = x.element('shape')
+
+      [label, shape.text || 'box' ]
+
+    end
 
     ids = labels.length.times.map {|i| i+1}
 
@@ -29,16 +45,18 @@ class PxGraphViz
     node_records = RexleBuilder.build do |xml|
 
       xml.records do
-        labels_ids.each do |val, i|
-          xml.node(id: i.to_s) do
-            xml.label val
+        labels_ids.each do |x, i|
+          label, shape = x
+          attr = {id: i.to_s, shape: shape}
+          xml.node(attr) do
+            xml.label label
           end
         end
       end
 
     end
 
-    a_nodes = labels.zip(node_records[3..-1])
+    a_nodes = labels.map(&:first).zip(node_records[3..-1])
     h_nodes = a_nodes.to_h
 
 
@@ -101,6 +119,8 @@ style = '
 
     a = RexleBuilder.new(h).to_a
     a[0] = 'gvml'
+    a[1] = {direction: @px.summary.direction} if @px.summary.direction
+    
     Rexle.new(a)    
 
   end

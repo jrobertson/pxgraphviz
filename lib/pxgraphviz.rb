@@ -4,6 +4,7 @@
 
 
 require 'polyrex'
+require 'graphvizml'
 
 
 class PxGraphViz
@@ -13,22 +14,49 @@ class PxGraphViz
 
     if s =~ /^<\?/ then
 
-      @px = Polyrex.new
-      @px.import s        
+      px = Polyrex.new
+      px.import s        
 
     else
-      @px = Polyrex.new s
+      px = Polyrex.new s
 
     end
     
+    @doc = build(px)
+    
+  end
+  
+  def to_doc()
+    @doc
+  end
+    
+  def to_dot()
+    GraphVizML.new(@doc).to_dot
   end
 
-  def to_doc()
+  # writes to a PNG file (not a PNG blob)
+  #
+  def to_png(filename)    
+    GraphVizML.new(@doc).to_png filename
+    'PNG file written'
+  end
+  
+  # writes to a SVG file (not an SVG blob)
+  #
+  def to_svg(filename)
+    GraphVizML.new(@doc).to_svg filename
+    'SVG file written'
+  end    
+  
+  
+  private
+
+  def build(px)
 
     # The issue with 2 nodes having the same name has yet to be rectified
     #jr020917 labels = @px.xpath('//records/item/summary/label/text()').uniq
     
-    summary = @px.xpath('//records/item/summary')
+    summary = px.xpath('//records/item/summary')
     labels = summary.map do |x|
       label = x.text('label')
       shape = x.element('shape')
@@ -62,7 +90,7 @@ class PxGraphViz
 
 
     a_edges = []
-    @px.each_recursive do |x, parent, level|
+    px.each_recursive do |x, parent, level|
 
       next if level <= 0
       a_edges << [
@@ -72,7 +100,6 @@ class PxGraphViz
       ]
 
     end
-
 
     # Create a document of the nodes
 
@@ -124,7 +151,7 @@ STYLE
     a = RexleBuilder.new(h).to_a
     a[0] = 'gvml'
 
-    summary = @px.summary.to_h
+    summary = px.summary.to_h
     
     a[1]  = %i(type direction).inject({}) do |r,x|
       r.merge(x => summary[x]) if summary.has_key? x

@@ -12,7 +12,7 @@ class PxGraphViz
   def initialize(s)
 
     if s =~ /^<\?/ then
-      
+
       @px = Polyrex.new
       @px.import s        
 
@@ -25,6 +25,7 @@ class PxGraphViz
 
   def to_doc()
 
+    # The issue with 2 nodes having the same name has yet to be rectified
     #jr020917 labels = @px.xpath('//records/item/summary/label/text()').uniq
     
     summary = @px.xpath('//records/item/summary')
@@ -64,7 +65,11 @@ class PxGraphViz
     @px.each_recursive do |x, parent, level|
 
       next if level <= 0
-      a_edges << [parent.label, x.label, x.connection]
+      a_edges << [
+        parent.label,
+        x.label, 
+        x.respond_to?(:connection) ? x.connection : ''
+      ]
 
     end
 
@@ -88,7 +93,7 @@ class PxGraphViz
     end
 
     
-style = '
+style =<<STYLE
   node { 
     color: #ddaa66; 
     fillcolor: #775500;
@@ -97,7 +102,6 @@ style = '
     fontsize: 8; 
     margin: 0.0;
     penwidth: 1; 
-    shape: box; 
     style: filled;
   }
 
@@ -107,10 +111,10 @@ style = '
     fontcolor: #444444; 
     fontname: Verdana; 
     fontsize: 8; 
-    dir: forward;
+    #{@type == :digraph ? 'dir: forward;' : ''}
     weight: 1;
   }
-'
+STYLE
     h = {
       style: style,
       nodes: {summary: '', records: node_records[3..-1]},
@@ -119,7 +123,12 @@ style = '
 
     a = RexleBuilder.new(h).to_a
     a[0] = 'gvml'
-    a[1] = {direction: @px.summary.direction} if @px.summary.direction
+
+    summary = @px.summary.to_h
+    
+    a[1]  = %i(type direction).inject({}) do |r,x|
+      r.merge(x => summary[x]) if summary.has_key? x
+    end
     
     Rexle.new(a)    
 

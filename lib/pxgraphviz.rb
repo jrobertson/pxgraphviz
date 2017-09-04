@@ -10,19 +10,10 @@ require 'graphvizml'
 class PxGraphViz
 
 
-  def initialize(s)
+  def initialize(s, style: default_stylesheet())
 
-    if s =~ /^<\?/ then
-
-      px = Polyrex.new
-      px.import s        
-
-    else
-      px = Polyrex.new s
-
-    end
-    
-    @doc = build(px)
+    px = s =~ /^<\?/ ? Polyrex.new.import(s) : Polyrex.new(s)
+    @doc = build(px, style)
     
   end
   
@@ -51,7 +42,7 @@ class PxGraphViz
   
   private
 
-  def build(px)
+  def build(px, style)
 
     # The issue with 2 nodes having the same name has yet to be rectified
     #jr020917 labels = @px.xpath('//records/item/summary/label/text()').uniq
@@ -117,13 +108,35 @@ class PxGraphViz
         end
       end
 
+    end    
+
+
+    h = {
+      style: style,
+      nodes: {summary: '', records: node_records[3..-1]},
+      edges: {summary: '', records: edge_records[3..-1]}
+    }
+
+    a = RexleBuilder.new(h).to_a
+    a[0] = 'gvml'
+
+    summary = px.summary.to_h
+    %i(recordx_type format_mask schema).each do |x| 
+      summary.delete x; summary.delete x.to_s
     end
 
-    
-style =<<STYLE
+    a[1] = summary
+
+    Rexle.new(a)    
+
+  end
+  
+  def default_stylesheet()
+
+<<STYLE
   node { 
     color: #ddaa66; 
-    fillcolor: #775500;
+    fillcolor: #775533;
     fontcolor: #ffeecc; 
     fontname: Trebuchet MS; 
     fontsize: 8; 
@@ -138,26 +151,10 @@ style =<<STYLE
     fontcolor: #444444; 
     fontname: Verdana; 
     fontsize: 8; 
-    #{@type == :digraph ? 'dir: forward;' : ''}
+    #{@type == :digraph ? 'dir: forward;' : 'dir: none;'}
     weight: 1;
   }
 STYLE
-    h = {
-      style: style,
-      nodes: {summary: '', records: node_records[3..-1]},
-      edges: {summary: '', records: edge_records[3..-1]}
-    }
-
-    a = RexleBuilder.new(h).to_a
-    a[0] = 'gvml'
-
-    summary = px.summary.to_h
-    
-    a[1]  = %i(type direction).inject({}) do |r,x|
-      r.merge(x => summary[x]) if summary.has_key? x
-    end
-    
-    Rexle.new(a)    
 
   end
 

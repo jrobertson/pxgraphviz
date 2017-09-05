@@ -9,6 +9,7 @@ require 'graphvizml'
 
 class PxGraphViz
 
+  attr_reader :doc
 
   def initialize(s, style: default_stylesheet())
 
@@ -17,6 +18,8 @@ class PxGraphViz
     
   end
   
+  # this method will be deprecated in the near future. Use #doc instead
+  #
   def to_doc()
     @doc
   end
@@ -67,7 +70,7 @@ class PxGraphViz
       xml.records do
         labels_ids.each do |x, i|
           label, shape = x
-          attr = {id: i.to_s, shape: shape}
+          attr = {gid: i.to_s, shape: shape}
           xml.node(attr) do
             xml.label label
           end
@@ -99,7 +102,7 @@ class PxGraphViz
       xml.records do
         a_edges.each.with_index do |x, i|
           item1, item2, connection = x
-          xml.edge id: 'e' + (i+1).to_s do
+          xml.edge gid: 'e' + (i+1).to_s do
             xml.summary do
               xml.label connection
             end

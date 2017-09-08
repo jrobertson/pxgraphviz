@@ -51,11 +51,10 @@ class PxGraphViz
     #jr020917 labels = @px.xpath('//records/item/summary/label/text()').uniq
     
     summary = px.xpath('//records/item/summary')
+    
     labels = summary.map do |x|
-      label = x.text('label')
-      shape = x.element('shape')
 
-      [label, shape.text || 'box' ]
+      a = [x.text('label'), x.text('shape') || 'box', x.text('url')]
 
     end
 
@@ -69,8 +68,8 @@ class PxGraphViz
 
       xml.records do
         labels_ids.each do |x, i|
-          label, shape = x
-          attr = {gid: i.to_s, shape: shape}
+          label, shape, url = x
+          attr = {gid: i.to_s, shape: shape, url: url}
           xml.node(attr) do
             xml.label label
           end
@@ -130,7 +129,7 @@ class PxGraphViz
 
     a[1] = summary
 
-    Rexle.new(a)    
+    Domle.new(a)    
 
   end
   

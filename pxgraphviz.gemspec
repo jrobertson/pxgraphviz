@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'pxgraphviz'
-  s.version = '0.3.5'
+  s.version = '0.3.6'
   s.summary = 'Generates a GraphViz Markup Language file from a Polyrex document'
   s.authors = ['James Robertson']
   s.files = Dir['lib/pxgraphviz.rb']

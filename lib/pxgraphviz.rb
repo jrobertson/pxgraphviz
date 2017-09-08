@@ -143,7 +143,7 @@ class PxGraphViz
 
     a[1] = summary
 
-    Rexle.new(a)    
+    Domle.new(a)    
 
   end
   

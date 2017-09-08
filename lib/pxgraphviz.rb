@@ -67,12 +67,20 @@ class PxGraphViz
     node_records = RexleBuilder.build do |xml|
 
       xml.records do
+        
         labels_ids.each do |x, i|
+          
           label, shape, url = x
-          attr = {gid: i.to_s, shape: shape, url: url}
-          xml.node(attr) do
-            xml.label label
+          attr = {gid: i.to_s, shape: shape}
+          
+          if url then
+            xml.a({href: url}) do
+              xml.node(attr) { xml.label label }
+            end
+          else
+            xml.node(attr) { xml.label label }
           end
+          
         end
       end
 
@@ -99,14 +107,20 @@ class PxGraphViz
     edge_records = RexleBuilder.build do |xml|
 
       xml.records do
+        
         a_edges.each.with_index do |x, i|
+          
           item1, item2, connection = x
+          
           xml.edge gid: 'e' + (i+1).to_s do
-            xml.summary do
-              xml.label connection
-            end
-            xml.records { RexleArray.new([h_nodes[item1], h_nodes[item2]])}
+            
+            xml.summary { xml.label connection }           
+            elements = [h_nodes[item1], h_nodes[item2]]            
+            nodes = elements.map {|node| node[0] == 'a' ? node[3] : node }
+            
+            xml.records { RexleArray.new(nodes)}
           end
+          
         end
       end
 
@@ -129,7 +143,7 @@ class PxGraphViz
 
     a[1] = summary
 
-    Domle.new(a)    
+    Rexle.new(a)    
 
   end
   
@@ -145,6 +159,10 @@ class PxGraphViz
     margin: 0.0;
     penwidth: 1; 
     style: filled;
+  }
+  
+  a node {
+    color: #0011ee;   
   }
 
   edge {

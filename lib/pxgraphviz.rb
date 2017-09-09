@@ -28,20 +28,21 @@ class PxGraphViz
     GraphVizML.new(@doc).to_dot
   end
 
-  # writes to a PNG file (not a PNG blob)
+  # returns a PNG blob
   #
-  def to_png(filename)    
-    GraphVizML.new(@doc).to_png filename
-    'PNG file written'
+  def to_png()    
+    GraphVizML.new(@doc).to_png
   end
   
-  # writes to a SVG file (not an SVG blob)
+  # returns an SVG blob
   #
-  def to_svg(filename)
-    GraphVizML.new(@doc).to_svg filename
-    'SVG file written'
+  def to_svg()
+    GraphVizML.new(@doc).to_svg
   end    
   
+  def write(filename)
+    GraphVizML.new(@doc).write filename
+  end
   
   private
 

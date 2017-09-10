@@ -9,20 +9,18 @@ require 'graphvizml'
 
 class PxGraphViz
 
-  attr_reader :doc
+  attr_reader :doc, :px
 
   def initialize(s, style: default_stylesheet())
 
-    px = s =~ /^<\?/ ? Polyrex.new.import(s) : Polyrex.new(s)
-    @doc = build(px, style)
+    @px = s =~ /^<\?/ ? Polyrex.new.import(s) : Polyrex.new(s)
+    doc = Rexslt.new(xslt_stylesheet(), @px.to_xml)\
+        .to_doc.root.element('nodes')
+    doc.root.elements.first.insert_before Rexle::Element.new('style')\
+        .add_text style
+    @doc = doc
     
-  end
-  
-  # this method will be deprecated in the near future. Use #doc instead
-  #
-  def to_doc()
-    @doc
-  end
+  end  
     
   def to_dot()
     GraphVizML.new(@doc).to_dot
@@ -45,108 +43,6 @@ class PxGraphViz
   end
   
   private
-
-  def build(px, style)
-
-    # The issue with 2 nodes having the same name has yet to be rectified
-    #jr020917 labels = @px.xpath('//records/item/summary/label/text()').uniq
-    
-    summary = px.xpath('//records/item/summary')
-    
-    labels = summary.map do |x|
-
-      a = [x.text('label'), x.text('shape') || 'box', x.text('url')]
-
-    end
-
-    ids = labels.length.times.map {|i| i+1}
-
-    labels_ids = labels.zip ids
-
-    # Create a document of the nodes
-
-    node_records = RexleBuilder.build do |xml|
-
-      xml.records do
-        
-        labels_ids.each do |x, i|
-          
-          label, shape, url = x
-          attr = {gid: i.to_s, shape: shape}
-          
-          if url then
-            xml.a({href: url}) do
-              xml.node(attr) { xml.label label }
-            end
-          else
-            xml.node(attr) { xml.label label }
-          end
-          
-        end
-      end
-
-    end
-
-    a_nodes = labels.map(&:first).zip(node_records[3..-1])
-    h_nodes = a_nodes.to_h
-
-
-    a_edges = []
-    px.each_recursive do |x, parent, level|
-
-      next if level <= 0
-      a_edges << [
-        parent.label,
-        x.label, 
-        x.respond_to?(:connection) ? x.connection : ''
-      ]
-
-    end
-
-    # Create a document of the nodes
-
-    edge_records = RexleBuilder.build do |xml|
-
-      xml.records do
-        
-        a_edges.each.with_index do |x, i|
-          
-          item1, item2, connection = x
-          
-          xml.edge gid: 'e' + (i+1).to_s do
-            
-            xml.summary { xml.label connection }           
-            elements = [h_nodes[item1], h_nodes[item2]]            
-            nodes = elements.map {|node| node[0] == 'a' ? node[3] : node }
-            
-            xml.records { RexleArray.new(nodes)}
-          end
-          
-        end
-      end
-
-    end    
-
-
-    h = {
-      style: style,
-      nodes: {summary: '', records: node_records[3..-1]},
-      edges: {summary: '', records: edge_records[3..-1]}
-    }
-
-    a = RexleBuilder.new(h).to_a
-    a[0] = 'gvml'
-
-    summary = px.summary.to_h
-    %i(recordx_type format_mask schema).each do |x| 
-      summary.delete x; summary.delete x.to_s
-    end
-
-    a[1] = summary
-
-    Domle.new(a)    
-
-  end
   
   def default_stylesheet()
 
@@ -177,6 +73,81 @@ class PxGraphViz
   }
 STYLE
 
+  end
+
+  
+  def xslt_stylesheet()
+    
+<<XSLT    
+<?xml version="1.0" encoding="UTF-8"?>
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+<xsl:output method="xml" indent="yes" />
+
+<xsl:template match='items'>
+  <xsl:element name="nodes">
+    <xsl:if test="summary/type">
+      <xsl:attribute name="type">
+        <xsl:value-of select="summary/type"/>
+      </xsl:attribute>
+    </xsl:if>
+    <xsl:if test="summary/direction">
+      <xsl:attribute name="direction">
+        <xsl:value-of select="summary/direction"/>
+      </xsl:attribute>
+    </xsl:if>
+    <xsl:apply-templates select='records'/>
+  </xsl:element>
+</xsl:template>
+
+<xsl:template match='records/item'>
+
+  <xsl:if test="summary/url">
+    <xsl:element name="a">
+      <xsl:attribute name="href">
+        <xsl:value-of select="summary/url"/>
+      </xsl:attribute>
+    </xsl:element>
+  </xsl:if>
+  
+  <xsl:element name="node">
+  
+    <xsl:attribute name="shape">
+      <xsl:value-of select="summary/shape"/>
+    </xsl:attribute>
+    
+    <xsl:if test="summary/id">
+      <xsl:attribute name="id">
+        <xsl:value-of select="summary/id"/>
+      </xsl:attribute>
+    </xsl:if>
+  
+    <xsl:if test="summary/class">
+      <xsl:attribute name="class">
+        <xsl:value-of select="summary/class"/>
+      </xsl:attribute>
+    </xsl:if>
+    
+    <xsl:if test="summary/connection">
+      <xsl:attribute name="connection">
+        <xsl:value-of select="summary/connection"/>
+      </xsl:attribute>
+    </xsl:if>    
+  
+    <xsl:apply-templates select='summary'/>
+    <xsl:apply-templates select='records'/>
+
+  </xsl:element>
+</xsl:template>
+
+<xsl:template match='item/summary'>
+
+    <label><xsl:value-of select='label'/></label>
+
+</xsl:template>
+
+</xsl:stylesheet>
+
+XSLT
   end
 
 end

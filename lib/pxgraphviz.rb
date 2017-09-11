@@ -95,13 +95,18 @@ STYLE
         <xsl:value-of select="summary/direction"/>
       </xsl:attribute>
     </xsl:if>
+    <xsl:if test="summary/layout">
+      <xsl:attribute name="layout">
+        <xsl:value-of select="summary/layout"/>
+      </xsl:attribute>
+    </xsl:if>
     <xsl:apply-templates select='records'/>
   </xsl:element>
 </xsl:template>
 
 <xsl:template match='records/item'>
 
-  <xsl:if test="summary/url">
+  <xsl:if test="summary/url and summary/url != ''">
     <xsl:element name="a">
       <xsl:attribute name="href">
         <xsl:value-of select="summary/url"/>

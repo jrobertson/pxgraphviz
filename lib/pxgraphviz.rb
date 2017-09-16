@@ -14,8 +14,10 @@ class PxGraphViz
   def initialize(s, style: default_stylesheet())
 
     @px = s =~ /^<\?/ ? Polyrex.new.import(s) : Polyrex.new(s)
+
     doc = Rexslt.new(xslt_stylesheet(), @px.to_xml)\
         .to_doc.root.element('nodes')
+
     doc.root.elements.first.insert_before Rexle::Element.new('style')\
         .add_text style
     @doc = doc
@@ -51,7 +53,7 @@ class PxGraphViz
     color: #ddaa66; 
     fillcolor: #775533;
     fontcolor: #ffeecc; 
-    fontname: Trebuchet MS; 
+    fontname: 'Trebuchet MS';
     fontsize: 8; 
     margin: 0.0;
     penwidth: 1; 
@@ -83,75 +85,87 @@ STYLE
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
 <xsl:output method="xml" indent="yes" />
 
-<xsl:template match='items'>
-  <xsl:element name="nodes">
-    <xsl:if test="summary/type">
-      <xsl:attribute name="type">
-        <xsl:value-of select="summary/type"/>
-      </xsl:attribute>
-    </xsl:if>
-    <xsl:if test="summary/direction">
-      <xsl:attribute name="direction">
-        <xsl:value-of select="summary/direction"/>
-      </xsl:attribute>
-    </xsl:if>
-    <xsl:if test="summary/layout">
-      <xsl:attribute name="layout">
-        <xsl:value-of select="summary/layout"/>
-      </xsl:attribute>
-    </xsl:if>
-    <xsl:apply-templates select='records'/>
-  </xsl:element>
-</xsl:template>
-
-<xsl:template match='records/item'>
-
-  <xsl:if test="summary/url and summary/url != ''">
-    <xsl:element name="a">
-      <xsl:attribute name="href">
-        <xsl:value-of select="summary/url"/>
-      </xsl:attribute>
+  <xsl:template match='items'>
+    <xsl:element name="nodes">
+      <xsl:if test="summary/type">
+        <xsl:attribute name="type">
+          <xsl:value-of select="summary/type"/>
+        </xsl:attribute>
+      </xsl:if>
+      <xsl:if test="summary/direction">
+        <xsl:attribute name="direction">
+          <xsl:value-of select="summary/direction"/>
+        </xsl:attribute>
+      </xsl:if>
+      <xsl:if test="summary/layout">
+        <xsl:attribute name="layout">
+          <xsl:value-of select="summary/layout"/>
+        </xsl:attribute>
+      </xsl:if>
+      <xsl:apply-templates select='records'/>
     </xsl:element>
-  </xsl:if>
-  
-  <xsl:element name="node">
-  
-    <xsl:attribute name="shape">
-      <xsl:value-of select="summary/shape"/>
-    </xsl:attribute>
+  </xsl:template>
+
+  <xsl:template match='records/item'>
+
+    <xsl:choose>
+      <xsl:when test="summary/url and summary/url != ''">
+
+        <xsl:element name="a">
+          <xsl:attribute name="href">
+            <xsl:value-of select="summary/url"/>
+          </xsl:attribute>   
+          <xsl:call-template name='node'/>
+        </xsl:element>
+
+      </xsl:when>
+      <xsl:otherwise> 
+
+        <xsl:call-template name='node'/>
+
+      </xsl:otherwise>
+
+    </xsl:choose>
+  </xsl:template>
+
+  <xsl:template match='item/summary'>
+
+      <label><xsl:value-of select='label'/></label>
+
+  </xsl:template>
+
+  <xsl:template name='node'>
+     <xsl:element name="node">
     
-    <xsl:if test="summary/id">
-      <xsl:attribute name="id">
-        <xsl:value-of select="summary/id"/>
+      <xsl:attribute name="shape">
+        <xsl:value-of select="summary/shape"/>
       </xsl:attribute>
-    </xsl:if>
-  
-    <xsl:if test="summary/class">
-      <xsl:attribute name="class">
-        <xsl:value-of select="summary/class"/>
-      </xsl:attribute>
-    </xsl:if>
+      
+      <xsl:if test="summary/id">
+        <xsl:attribute name="id">
+          <xsl:value-of select="summary/id"/>
+        </xsl:attribute>
+      </xsl:if>
     
-    <xsl:if test="summary/connection">
-      <xsl:attribute name="connection">
-        <xsl:value-of select="summary/connection"/>
-      </xsl:attribute>
-    </xsl:if>    
-  
-    <xsl:apply-templates select='summary'/>
-    <xsl:apply-templates select='records'/>
+      <xsl:if test="summary/class">
+        <xsl:attribute name="class">
+          <xsl:value-of select="summary/class"/>
+        </xsl:attribute>
+      </xsl:if>
+      
+      <xsl:if test="summary/connection">
+        <xsl:attribute name="connection">
+          <xsl:value-of select="summary/connection"/>
+        </xsl:attribute>
+      </xsl:if>    
+    
+      <xsl:apply-templates select='summary'/>
+      <xsl:apply-templates select='records'/>
 
-  </xsl:element>
-</xsl:template>
-
-<xsl:template match='item/summary'>
-
-    <label><xsl:value-of select='label'/></label>
-
-</xsl:template>
+    </xsl:element>  
+  </xsl:template>
 
 </xsl:stylesheet>
-
 XSLT
   end
 

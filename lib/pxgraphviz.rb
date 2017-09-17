@@ -7,7 +7,7 @@ require 'polyrex'
 require 'graphvizml'
 
 
-class PxGraphViz
+class PxGraphViz < GraphVizML
 
   attr_reader :doc, :px
 
@@ -21,30 +21,12 @@ class PxGraphViz
     doc.root.elements.first.insert_before Rexle::Element.new('style')\
         .add_text style
     @doc = doc
+    super(doc)
     
   end  
     
-  def to_dot()
-    GraphVizML.new(@doc).to_dot
-  end
-
-  # returns a PNG blob
-  #
-  def to_png()    
-    GraphVizML.new(@doc).to_png
-  end
   
-  # returns an SVG blob
-  #
-  def to_svg()
-    GraphVizML.new(@doc).to_svg
-  end    
-  
-  def write(filename)
-    GraphVizML.new(@doc).write filename
-  end
-  
-  private
+  protected
   
   def default_stylesheet()
 
@@ -77,6 +59,7 @@ STYLE
 
   end
 
+  private
   
   def xslt_stylesheet()
     

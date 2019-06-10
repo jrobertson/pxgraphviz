@@ -7,38 +7,55 @@ require 'polyrex'
 require 'graphvizml'
 
 
+module RegGem
+
+  def self.register()
+'
+hkey_gems
+  doctype
+    pxgraphviz
+      require pxgraphviz
+      class PxGraphViz
+      media_type svg
+'      
+  end
+end
+
+
 class PxGraphViz < GraphVizML
   using ColouredText
 
   attr_reader :doc, :px
 
-  def initialize(s, style: nil, debug: false, fill: '#778833', 
+  def initialize(obj=nil, style: nil, debug: false, fill: '#778833', 
                  stroke: '#999999', text_color: '#ffeecc')
 
-    @px = s =~ /^<\?/ ? Polyrex.new.import(s) : Polyrex.new(s)
+    if obj then
 
-    @type = @px.summary[:type] == 'digraph' ? 'dir: forward;' : 'dir: none;'
-    @shape = @px.summary[:shape] || 'ellipse;'
-    
-    style ||= default_stylesheet()
-    doc = Rexslt.new(xslt_stylesheet(), @px.to_xml)\
-        .to_doc.root.element('nodes')
-    
-    doc.root.elements.first.insert_before Rexle::Element.new('style')\
-        .add_text style
-    @doc = doc
-    puts 'pxgraphviz: before super'.info if debug
+      s = RXFHelper.read(obj).first
+      @doc = import_string(s)
 
-    super(doc, debug: debug, fill: fill, 
-                 stroke: stroke, text_color: text_color)
+      puts 'pxgraphviz: before super'.info if debug
+
+      super(@doc, debug: debug, fill: fill, 
+                  stroke: stroke, text_color: text_color)
+      
+    end
     
     @css = "
-      .node ellipse {stroke: #{stroke}; fill: #{fill}}
+      .node polygon {stroke: #{stroke}; fill: #{fill}}
       .node text {fill: #{text_color}}
       .edge path {stroke: #{stroke}}
       .edge polygon {stroke: #{stroke}; fill: #{stroke}}
     "
     
+  end
+
+  def import(s)
+    s2 = RXFHelper.read(s).first
+    @doc = import_string s2
+    @g = build_from_nodes Domle.new(@doc.root.xml)
+    self
   end  
     
   
@@ -49,8 +66,8 @@ class PxGraphViz < GraphVizML
 <<STYLE
   node { 
     color: #ddaa66; 
-    fillcolor: #778833;
-    fontcolor: #ffeecc; 
+    fillcolor: #{@fill};
+    fontcolor: #{@text_color}; 
     fontname: 'Trebuchet MS';
     fontsize: 8; 
     margin: 0.0;
@@ -65,7 +82,7 @@ class PxGraphViz < GraphVizML
 
   edge {
     arrowsize: 0.5;
-    color: #999999; 
+    color: #{@stroke}; 
     fontcolor: #444444; 
     fontname: Verdana; 
     fontsize: 8; 
@@ -76,7 +93,61 @@ STYLE
 
   end
 
+  
   private
+  
+  def import_string(s)
+
+    @px = if s =~ /<\?pxgraphviz\b/ then
+      
+header = "<?polyrex schema='items[type, shape]/item[label, connection]' delimiter =' # '?>
+type: digraph
+shape: box    
+"
+      s2 = s.slice!(/<\?pxgraphviz\b[^>]*\?>/)
+
+      if s2 then
+        
+        attributes = %w(id fill stroke text_color).inject({}) do |r, keyword|
+          found = s2[/(?<=#{keyword}=['"])[^'"]+/]
+          found ? r.merge(keyword.to_sym => found) : r
+        end
+        
+      fill, stroke, text_color = %i(fill stroke text_color).map do |x|
+        attributes[x] ? attributes[x] : method(x).call
+      end
+      
+      @css = "
+        .node ellipse {stroke: #{stroke}; fill: #{fill}}
+        .node text {fill: #{text_color}}
+        .edge path {stroke: #{stroke}}
+        .edge polygon {stroke: #{stroke}; fill: #{stroke}}
+      "      
+        
+      end 
+      s3 = header + s
+      puts 's3: ' + s3.inspect if @debug
+      Polyrex.new.import(s3)
+      
+    else
+      
+      Polyrex.new(s)
+      
+    end    
+
+    @type = @px.summary[:type] == 'digraph' ? 'dir: forward;' : 'dir: none;'
+    @shape = @px.summary[:shape] || 'ellipse;'
+    
+    style ||= default_stylesheet()
+    doc = Rexslt.new(xslt_stylesheet(), @px.to_xml)\
+        .to_doc.root.element('nodes')
+    
+    doc.root.elements.first.insert_before Rexle::Element.new('style')\
+        .add_text style
+    
+    doc
+    
+  end
   
   def xslt_stylesheet()
     

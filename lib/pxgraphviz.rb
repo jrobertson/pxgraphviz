@@ -138,12 +138,12 @@ shape: box
     @type = @px.summary[:type] == 'digraph' ? 'dir: forward;' : 'dir: none;'
     @shape = @px.summary[:shape] || 'ellipse;'
     
-    style ||= default_stylesheet()
+    @style ||= default_stylesheet()
     doc = Rexslt.new(xslt_stylesheet(), @px.to_xml)\
         .to_doc.root.element('nodes')
     
     doc.root.elements.first.insert_before Rexle::Element.new('style')\
-        .add_text style
+        .add_text @style
     
     doc
     
